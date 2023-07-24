@@ -40,9 +40,9 @@ function listenToPcPartsGetRequest() {
             await PcPart.find().then((result) => {
                 res.json(result);
             });
-        } catch(error) {
+        } catch (error) {
             console.error('Error fetching data:', error);
-            res.status(500).json({error: 'Error fetching Data'});
+            res.status(500).json({ error: 'Error fetching Data' });
         }
     });
 }
@@ -55,17 +55,26 @@ function listenToUserRequests() {
 
 //
 function listenToCartRequests() {
-    app.post('/cart', async (req, res) => {
-        try {
-            const newCartItem = new CartItem(req.body);
-            await newCartItem.save().then(() => {
-                res.status(201).json('Item added to cart');
-            }).catch((err) => {
-                console.log("Error adding item to cart:", err);
-                res.status(500).json("Error adding item to cart", err);
-            })
     
-        } catch(err) {
+    app.post('/cart', async (req, res) => {
+        const cartItemId = req.body.id;
+        const existingCartItem = await CartItem.findOne({_id: cartItemId});
+        
+        try {
+            if (existingCartItem) {
+                existingCartItem.quantity += 1;
+                await existingCartItem.save().then(() => {
+                    res.status(201).json({message: 'Item added to cart'});
+                });
+            } else {
+                const newItem = new CartItem(req.body);
+                await newItem.save().then( async () => {
+                    const cartItemLength = await CartItem.find().countDocuments();
+                    res.status(201).json({message: 'Item added to cart', cartLength: cartItemLength});
+                });
+            }
+
+        } catch (err) {
             console.log("Error adding item to cart:", err);
             res.status(500).json("Error adding item to cart:", err);
         }
@@ -75,7 +84,7 @@ function listenToCartRequests() {
         try {
             const allCartItems = await CartItem.find();
             res.json(allCartItems);
-        } catch(err) {
+        } catch (err) {
             console.log("Internal server error:", err);
             res.status(500).json("Internal server error:", err);
         }
@@ -94,8 +103,6 @@ function listenToCartRequests() {
 
             cartItem.quantity = newQuantity;
             cartItem.save();
-
-            res.json(cartItem);
         } catch (err) {
             console.log("Internal server error:", err);
             res.status(500).json("Error updating cart item quantity:", err);
@@ -107,14 +114,14 @@ function listenToCartRequests() {
         
         try {
             const deletedCartItem = await CartItem.findByIdAndDelete(cartItemId);
-
+            
             if (!deletedCartItem) {
                 return res.status(404).json("Error 404: Cart item not found");
             };
-
-            res.status(201).json(deletedCartItem);
-
-        } catch(err) {
+            
+            const cartItemLength = await CartItem.find().countDocuments();
+            res.status(201).json(cartItemLength);
+        } catch (err) {
             console.log("Error removing item from cart:", err);
             res.status(500).json("Error removing item from cart:", err);
         }
