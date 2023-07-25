@@ -4,9 +4,10 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const PcPart = require('./schemas/pcparts-schema');
-const register = require('./routes/user/register');
-const login = require('./routes/user/login');
-const CartItem = require('./schemas/cart-items');
+const register = require('./routes/register');
+const login = require('./routes/login');
+const CartItem = require('./schemas/cart-items-schema');
+const WishlistItem = require('./schemas/wishlist-items-schema');
 
 function connectToMongoDb() {
     const mongoDbUrl = 'mongodb+srv://maxo:maxoo1234@cluster0.9f61g7q.mongodb.net/pcPartBase?retryWrites=true&w=majority';
@@ -31,11 +32,12 @@ function main() {
     listenToPcPartsGetRequest();
     listenToUserRequests();
     listenToCartRequests();
+    listenToWishlistRequests();
 }
 
 //
 function listenToPcPartsGetRequest() {
-    app.get('/', async (_, res) => {
+    app.get('/parts', async (_, res) => {
         try {
             await PcPart.find().then((result) => {
                 res.json(result);
@@ -55,7 +57,6 @@ function listenToUserRequests() {
 
 //
 function listenToCartRequests() {
-    
     app.post('/cart', async (req, res) => {
         const cartItemId = req.body.id;
         const existingCartItem = await CartItem.findOne({_id: cartItemId});
@@ -113,11 +114,11 @@ function listenToCartRequests() {
         const cartItemId = req.params.id;
         
         try {
-            const deletedCartItem = await CartItem.findByIdAndDelete(cartItemId);
-            
-            if (!deletedCartItem) {
-                return res.status(404).json("Error 404: Cart item not found");
-            };
+            if (cartItemId === 'deleteAll') {
+                await CartItem.deleteMany({});
+            } else {
+                await CartItem.findByIdAndDelete(cartItemId);   
+            }
             
             const cartItemLength = await CartItem.find().countDocuments();
             res.status(201).json(cartItemLength);
@@ -126,4 +127,67 @@ function listenToCartRequests() {
             res.status(500).json("Error removing item from cart:", err);
         }
     });
+}
+
+//
+function listenToWishlistRequests() {
+    app.get('/wishlist', async (_, res) => {
+        try {
+            const allWishlistItems = await WishlistItem.find();
+            res.json(allWishlistItems);
+        } catch(err) {
+            console.log('Error fetching wishlist:', err);
+            res.status(500).json('Error fetching wishlist', err);
+        }
+    });
+
+    app.post('/wishlist', async (req, res) => {
+        try {
+            const existingWishlistItem = await WishlistItem.findById(req.body.id);
+
+            if (existingWishlistItem) {
+                res.json({message: 'Item already in wishlist'});   
+            } else {
+                const newWishlistItem = new WishlistItem(req.body);
+                newWishlistItem.save().then( async () => {
+                    const wishListItemLength = await WishlistItem.find().countDocuments();
+                    res.status(201).json({message: 'Item added to wishlist', wishListLength: wishListItemLength});
+                })
+            }
+
+        } catch(err) {
+            console.log('Error adding items to wishlist:', err);
+            res.status(500).json('Error adding items to wishlist', err);
+        }
+    });
+
+    app.delete('/wishlist/:id', async (req, res) => {
+        const deletedItemId = req.params.id;
+
+        try {
+            if (deletedItemId === 'deleteAll') {
+                await WishlistItem.deleteMany({});
+            } else {
+                await WishlistItem.findByIdAndDelete(deletedItemId);                
+            }
+
+            const wishlistItemLength = await WishlistItem.find().countDocuments();
+            res.status(201).json(wishlistItemLength);
+        } catch(err) {
+            console.log('Error deleting item from wishlist:', err);
+            res.status(500).json('Error deleting item from wishlist', err);
+        }
+    });
+
+    app.get('/checkout', async (_, res) => {
+        try {
+            await CartItem.deleteMany({ quantity: 0 }).then( async () => {
+                const cartItemLength = await CartItem.find().countDocuments();
+                res.json(cartItemLength);
+            });
+        } catch (err) {
+            console.log('Error updating checkout: ', err);
+            res.status(500).json('Error updating checkout:', err);
+        }
+    })
 }
