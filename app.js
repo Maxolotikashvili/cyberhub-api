@@ -12,6 +12,8 @@ const login = require('./routes/login');
 const CartItem = require('./schemas/cart-items-schema');
 const WishlistItem = require('./schemas/wishlist-items-schema');
 
+const PORT = process.env.PORT ?? 3000;
+
 function connectToMongoDb() {
     const mongoDbUrl = 'mongodb+srv://maxo:maxoo1234@cluster0.9f61g7q.mongodb.net/pcPartBase?retryWrites=true&w=majority';
     mongoose.connect(mongoDbUrl).then(() => {
@@ -28,7 +30,9 @@ function connectToMongoDb() {
 connectToMongoDb();
 
 function main() {
-    app.listen(3000);
+    app.listen(PORT, () => {
+        console.log(`server is up and running on ${PORT}`)
+    });
     app.use(express.json());
     app.use(cors());
 
