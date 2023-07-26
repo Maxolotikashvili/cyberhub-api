@@ -217,7 +217,5 @@ function listenToWishlistRequests() {
             console.log('Error updating checkout: ', err);
             res.status(500).json('Error updating checkout:', err);
         }
-    })
-
-    console.log('shemodis')
+    });
 }
