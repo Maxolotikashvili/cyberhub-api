@@ -127,6 +127,27 @@ function listenToCartRequests() {
             res.status(500).json("Error removing item from cart:", err);
         }
     });
+
+    // listen to cart length request on app initializing
+    app.get('/cartLength', async (_, res) => {
+        try {
+            const cartLength = await CartItem.find().countDocuments();
+            res.json(cartLength);
+        } catch(err) {
+            console.log('Error fetching cart length', err);
+            res.status(500).json('Erorr fetching cart length', err);
+        }
+    });
+
+    app.get('/wishlistLength', async (_, res) => {
+        try {
+            const wishlistLength = await WishlistItem.find().countDocuments();
+            res.json(wishlistLength);
+        } catch(err) {
+            console.log('Error fetching wishlist length', err);
+            res.status(500).json('Erorr fetching wishlist length', err);
+        }
+    });
 }
 
 //
