@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
 
-
 const PcPart = require('./schemas/pcparts-schema');
 const register = require('./routes/register');
 const login = require('./routes/login');
