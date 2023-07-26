@@ -214,4 +214,6 @@ function listenToWishlistRequests() {
             res.status(500).json('Error updating checkout:', err);
         }
     })
+
+    console.log('shemodis')
 }
