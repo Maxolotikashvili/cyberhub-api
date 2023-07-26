@@ -6,7 +6,7 @@
   "scripts": {
     "test": "app",
     "dev": "nodemon app",
-    "run": "node app"
+    "start": "node app"
   },
   "author": "",
   "license": "ISC",
